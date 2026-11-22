@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=EZP2019 USB Programmer
+GenericName=EEPROM & SPI Flash Programmer
+Comment=Interface gráfica nativa para o programador USB EZP2019 (SPI Flash, 24/93 EEPROM)
+Exec=ezp2019-gui
+Icon=ezp2019-gui
+Terminal=false
+Categories=Development;Electronics;
+Keywords=ezp2019;eeprom;spi;flash;bios;programmer;usb;hex;
+StartupNotify=true
+StartupWMClass=ezp2019-gui

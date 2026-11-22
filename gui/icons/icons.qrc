@@ -1,0 +1,14 @@
+<RCC>
+    <qresource prefix="/icons">
+        <file>open.svg</file>
+        <file>save.svg</file>
+        <file>detect.svg</file>
+        <file>read.svg</file>
+        <file>write.svg</file>
+        <file>verify.svg</file>
+        <file>erase.svg</file>
+        <file>auto.svg</file>
+        <file>cancel.svg</file>
+        <file>ezp2019-gui.svg</file>
+    </qresource>
+</RCC>

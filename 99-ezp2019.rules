@@ -1,0 +1,4 @@
+# EZP2019 High-Speed USB Programmer (VID: 0x1fc8, PID: 0x310b)
+# Permite que usuários comuns acessem o programador sem root/sudo.
+SUBSYSTEM=="usb", ATTR{idVendor}=="1fc8", ATTR{idProduct}=="310b", MODE="0666", TAG+="uaccess"
+SUBSYSTEM=="usb_device", ATTR{idVendor}=="1fc8", ATTR{idProduct}=="310b", MODE="0666", TAG+="uaccess"

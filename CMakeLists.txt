@@ -1,0 +1,217 @@
+cmake_minimum_required(VERSION 3.15)
+# --- Version Detection ---
+find_package(Git QUIET)
+if(GIT_FOUND)
+    # Get the latest tag
+    execute_process(
+        COMMAND ${GIT_EXECUTABLE} describe --tags --abbrev=0
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        OUTPUT_VARIABLE GIT_TAG
+        ERROR_QUIET
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+    
+    # Get the full version description (with distance and hash)
+    execute_process(
+        COMMAND ${GIT_EXECUTABLE} describe --tags --always --dirty
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+        OUTPUT_VARIABLE GIT_VERSION
+        ERROR_QUIET
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+endif()
+
+if(NOT GIT_TAG)
+    set(GIT_TAG "0.0.0")
+endif()
+
+if(NOT GIT_VERSION)
+    set(GIT_VERSION "${GIT_TAG}-unknown")
+endif()
+
+# Clean up tag for CMake versioning (remove 'v' prefix if present)
+string(REGEX REPLACE "^v" "" CLEAN_TAG "${GIT_TAG}")
+string(REGEX MATCH "^[0-9]+(\\.[0-9]+)*" PROJECT_NUMERIC_VERSION "${CLEAN_TAG}")
+if(NOT PROJECT_NUMERIC_VERSION)
+    set(PROJECT_NUMERIC_VERSION "0.0.0")
+endif()
+
+project(ezp2019 
+    VERSION ${PROJECT_NUMERIC_VERSION}
+    LANGUAGES C CXX
+)
+
+option(BUILD_GUI "Build the Qt6 GUI application (ezp2019-gui)" ON)
+
+message(STATUS "ezp2019 version: ${PROJECT_VERSION} (Git: ${GIT_VERSION}, Tag: ${GIT_TAG})")
+
+set(EZP2019_FULL_VERSION ${GIT_VERSION})
+
+add_definitions(-DEZP2019_VERSION="${EZP2019_FULL_VERSION}")
+
+# --- Standard Settings ---
+set(CMAKE_C_STANDARD 23)
+set(CMAKE_C_STANDARD_REQUIRED ON)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+# Default to RelWithDebInfo if no build type is specified
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+    message(STATUS "No build type selected, defaulting to RelWithDebInfo")
+    set(CMAKE_BUILD_TYPE "RelWithDebInfo" CACHE STRING "Choose the type of build." FORCE)
+endif()
+
+# --- RPATH Settings ---
+# Set RPATH for the executable so it can find the library in ../lib relative to its path
+# We use \$ORIGIN to ensure it's treated as a literal by the linker
+set(CMAKE_INSTALL_RPATH "\$ORIGIN/../lib")
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+set(CMAKE_SKIP_INSTALL_RPATH FALSE)
+set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
+
+# --- Dependencies ---
+include(GNUInstallDirs)
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(LIBUSB REQUIRED IMPORTED_TARGET libusb-1.0)
+
+find_package(Python3 REQUIRED)
+
+# --- Compiler Flags ---
+if(MSVC)
+    add_compile_options(/W4 /WX)
+else()
+    add_compile_options(-Wall -Wextra -Wpedantic -Werror=format-security -fstack-protector-strong)
+endif()
+
+# Symbol visibility settings
+set(CMAKE_C_VISIBILITY_PRESET hidden)
+set(CMAKE_VISIBILITY_INLINES_HIDDEN ON)
+
+# --- Chip Database Generation ---
+set(CHIP_HEADER "${CMAKE_CURRENT_BINARY_DIR}/ezp2019_chips.h")
+add_custom_command(
+    OUTPUT "${CHIP_HEADER}"
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/ezp2019_gen_header.py"
+            "${CMAKE_CURRENT_SOURCE_DIR}/ezp2019.dat"
+            -o "${CHIP_HEADER}"
+    DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/ezp2019_gen_header.py"
+            "${CMAKE_CURRENT_SOURCE_DIR}/ezp2019.dat"
+    COMMENT "Generating ezp2019_chips.h from ezp2019.dat"
+    VERBATIM
+)
+
+# --- Library Target ---
+add_library(ezp2019 SHARED
+    ezp2019.c
+    ezp2019.h
+    "${CHIP_HEADER}"
+)
+
+set_target_properties(ezp2019 PROPERTIES
+    VERSION ${PROJECT_VERSION}
+    SOVERSION ${PROJECT_VERSION}
+    PUBLIC_HEADER ezp2019.h
+)
+
+target_include_directories(ezp2019 PUBLIC 
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
+    $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+)
+
+target_link_libraries(ezp2019 PRIVATE PkgConfig::LIBUSB)
+
+# --- CLI Target ---
+add_executable(ezp2019_cli main.c)
+set_target_properties(ezp2019_cli PROPERTIES OUTPUT_NAME "ezp2019")
+target_link_libraries(ezp2019_cli PRIVATE ezp2019)
+
+# --- GUI Target (Qt 6 Widgets + Svg) ---
+if(BUILD_GUI)
+    find_package(Qt6 COMPONENTS Widgets Svg QUIET)
+    if(Qt6Widgets_FOUND AND Qt6Svg_FOUND)
+        message(STATUS "Qt6 Widgets + Svg found (${Qt6Widgets_VERSION}) - building ezp2019-gui")
+        add_executable(ezp2019_gui
+            gui/main.cpp
+            gui/BufferUtils.h
+            gui/BufferUtils.cpp
+            gui/ChipDatabase.h
+            gui/ChipDatabase.cpp
+            gui/HexEditorWidget.h
+            gui/HexEditorWidget.cpp
+            gui/ZifSvgGenerator.h
+            gui/ZifSvgGenerator.cpp
+            gui/ZifSocketWidget.h
+            gui/ZifSocketWidget.cpp
+            gui/EzpWorker.h
+            gui/EzpWorker.cpp
+            gui/UsbMonitor.h
+            gui/UsbMonitor.cpp
+            gui/MainWindow.h
+            gui/MainWindow.cpp
+            gui/icons/icons.qrc
+        )
+        set_target_properties(ezp2019_gui PROPERTIES
+            OUTPUT_NAME "ezp2019-gui"
+            CXX_STANDARD 20
+            CXX_STANDARD_REQUIRED ON
+            AUTOMOC ON
+            AUTORCC ON
+        )
+        target_link_libraries(ezp2019_gui PRIVATE ezp2019 Qt6::Widgets Qt6::Svg)
+        install(TARGETS ezp2019_gui
+            RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+        )
+        install(FILES ezp2019-gui.desktop
+            DESTINATION ${CMAKE_INSTALL_DATADIR}/applications
+        )
+        install(FILES gui/icons/ezp2019-gui.svg
+            DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/scalable/apps
+        )
+    else()
+        message(WARNING "Qt6 Widgets/Svg not found - skipping ezp2019-gui target")
+    endif()
+endif()
+
+# --- Installation ---
+install(TARGETS ezp2019_cli
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
+
+install(TARGETS ezp2019
+    EXPORT ezp2019Targets
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+)
+
+# --- pkg-config ---
+configure_file(ezp2019.pc.in ezp2019.pc @ONLY)
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/ezp2019.pc"
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig
+)
+
+# --- CMake Export ---
+include(CMakePackageConfigHelpers)
+
+write_basic_package_version_file(
+    "${CMAKE_CURRENT_BINARY_DIR}/ezp2019ConfigVersion.cmake"
+    VERSION ${PROJECT_VERSION}
+    COMPATIBILITY SameMajorVersion
+)
+
+configure_package_config_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/ezp2019Config.cmake.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/ezp2019Config.cmake"
+    INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/ezp2019
+)
+
+install(EXPORT ezp2019Targets
+    FILE ezp2019Targets.cmake
+    NAMESPACE ezp2019::
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/ezp2019
+)
+
+install(FILES
+    "${CMAKE_CURRENT_BINARY_DIR}/ezp2019Config.cmake"
+    "${CMAKE_CURRENT_BINARY_DIR}/ezp2019ConfigVersion.cmake"
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/ezp2019
+)
