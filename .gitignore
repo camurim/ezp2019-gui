@@ -1,4 +1,13 @@
-/build
-/.qtcreator
+# CMake / C / Qt build artifacts
+/build/
+/.qtcreator/
 compile_commands.json
 ezp2019_chips.h
+CMakeUserPresets.json
+
+# Flatpak build artifacts
+.flatpak-builder/
+flatpak-build/
+flatpak-repo/
+*.flatpak
+*.flatpakref

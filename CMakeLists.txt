@@ -167,6 +167,9 @@ if(BUILD_GUI)
         install(FILES gui/icons/ezp2019-gui.svg
             DESTINATION ${CMAKE_INSTALL_DATADIR}/icons/hicolor/scalable/apps
         )
+        install(FILES flatpak/io.github.camurim.Ezp2019Gui.metainfo.xml
+            DESTINATION ${CMAKE_INSTALL_DATADIR}/metainfo
+        )
     else()
         message(WARNING "Qt6 Widgets/Svg not found - skipping ezp2019-gui target")
     endif()

@@ -1,0 +1,35 @@
+# Manifesto pronto para submissão ao Flathub (https://github.com/flathub/flathub).
+# Antes de abrir o Pull Request no Flathub:
+#   1. Crie uma tag/release no GitHub (ex: v1.0.0)
+#   2. Atualize `tag` e `commit` abaixo com a tag e o hash SHA-1 exato do commit
+#   3. Renomeie este arquivo para `io.github.camurim.Ezp2019Gui.yml` no PR do Flathub
+
+app-id: io.github.camurim.Ezp2019Gui
+runtime: org.kde.Platform
+runtime-version: '6.11'
+sdk: org.kde.Sdk
+command: ezp2019-gui
+
+rename-desktop-file: ezp2019-gui.desktop
+rename-icon: ezp2019-gui
+
+finish-args:
+  - --share=ipc
+  - --socket=fallback-x11
+  - --socket=wayland
+  - --device=all
+
+modules:
+  - name: ezp2019-gui
+    buildsystem: cmake-ninja
+    builddir: true
+    config-opts:
+      - -DCMAKE_BUILD_TYPE=Release
+      - -DCMAKE_INSTALL_LIBDIR=lib
+      - -DBUILD_GUI=ON
+    sources:
+      - type: git
+        url: https://github.com/camurim/ezp2019-gui.git
+        tag: v1.0.0
+        commit: f61f3f3
+

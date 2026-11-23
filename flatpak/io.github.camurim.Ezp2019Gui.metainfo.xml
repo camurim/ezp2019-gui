@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.camurim.Ezp2019Gui</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>MIT</project_license>
+
+  <name>EZP2019 USB Programmer</name>
+  <summary>Native Qt 6 GUI for the EZP2019 USB EEPROM and SPI Flash programmer</summary>
+  <summary xml:lang="pt_BR">Interface gráfica nativa em Qt 6 para o programador USB EZP2019 (EEPROM e SPI Flash)</summary>
+
+  <developer id="io.github.camurim">
+    <name>Carlos Amurim</name>
+  </developer>
+
+  <description>
+    <p>
+      EZP2019 USB Programmer is a native Linux Qt 6 desktop application for reading, writing,
+      verifying, and erasing SPI Flash (25xx), I2C EEPROM (24xx), and Microwire EEPROM (93xx)
+      chips using the EZP2019 High-Speed USB Programmer (VID 0x1fc8, PID 0x310b).
+    </p>
+    <p>Key features:</p>
+    <ul>
+      <li>Direct native integration with libezp2019 and libusb-1.0</li>
+      <li>Automatic USB device detection and non-blocking asynchronous read, program, verify, and erase operations</li>
+      <li>Database of 239 supported chips with cascading selectors and quick search by model or JEDEC ID</li>
+      <li>Dynamic 16-pin ZIF socket SVG placement diagram with Pin 1 orientation and 1.8V adapter warnings</li>
+      <li>Virtualized Hex and ASCII editor with binary (.bin) and Intel HEX (.hex) support, search, and live CRC32/MD5 checksums</li>
+    </ul>
+    <p>
+      Note: Accessing the EZP2019 USB programmer without root privileges requires installing
+      a udev rule on the host system (/etc/udev/rules.d/99-ezp2019.rules) granting access to
+      USB device 1fc8:310b.
+    </p>
+  </description>
+
+  <launchable type="desktop-id">io.github.camurim.Ezp2019Gui.desktop</launchable>
+
+  <url type="homepage">https://github.com/camurim/ezp2019-gui</url>
+  <url type="bugtracker">https://github.com/camurim/ezp2019-gui/issues</url>
+  <url type="vcs-browser">https://github.com/camurim/ezp2019-gui</url>
+
+  <branding>
+    <color type="primary" scheme_preference="light">#dbeafe</color>
+    <color type="primary" scheme_preference="dark">#1e3a5f</color>
+  </branding>
+
+  <!--
+    Flathub requires at least one screenshot showing the application window.
+    Before submitting to Flathub, capture a screenshot of the main window
+    (e.g., img/screenshot-main.png) and update the URL below to point to a
+    tagged commit or release asset.
+  -->
+  <screenshots>
+    <screenshot type="default">
+      <caption>EZP2019 USB Programmer hardware and interface</caption>
+      <image>https://raw.githubusercontent.com/camurim/ezp2019-gui/main/img/ezp2019.jpg</image>
+    </screenshot>
+  </screenshots>
+
+  <categories>
+    <category>Development</category>
+    <category>Electronics</category>
+  </categories>
+
+  <keywords>
+    <keyword>ezp2019</keyword>
+    <keyword>eeprom</keyword>
+    <keyword>spi</keyword>
+    <keyword>flash</keyword>
+    <keyword>bios</keyword>
+    <keyword>programmer</keyword>
+    <keyword>usb</keyword>
+    <keyword>hex</keyword>
+  </keywords>
+
+  <supports>
+    <control>pointing</control>
+    <control>keyboard</control>
+  </supports>
+
+  <requires>
+    <display_length compare="ge">768</display_length>
+  </requires>
+
+  <content_rating type="oars-1.1" />
+
+  <releases>
+    <release version="1.0.0" date="2026-11-23">
+      <description>
+        <p>Initial Flatpak release with native Qt 6 GUI, 239 supported chips, dynamic ZIF socket diagram, and virtualized Hex/ASCII editor.</p>
+      </description>
+    </release>
+  </releases>
+</component>
+
